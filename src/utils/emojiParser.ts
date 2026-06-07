@@ -1,27 +1,59 @@
-/**
- * Parse Telegram <tg-emoji> tags and extract the fallback Unicode emoji
- * Example: <tg-emoji emoji-id="5368324170671202286">✨</tg-emoji> → ✨
- */
-export function parseTelegramEmojis(html: string): string {
-  if (!html) return "";
-  return html.replace(
-    /<tg-emoji emoji-id="\d+">(.+?)<\/tg-emoji>/g,
-    "$1"
-  );
+export interface ParsedEmoji {
+  emojiId: string | null;
+  fallback: string;
 }
 
-/**
- * Strip all HTML tags from a string
- */
-export function stripHtml(html: string): string {
-  if (!html) return "";
-  return html.replace(/<[^>]*>/g, "");
+export function parseTelegramEmojis(text: string): string {
+  if (!text) return "";
+
+  const emojiRegex = /<tg-emoji\s+emoji-id="(\d+)">([^<]+)<\/tg-emoji>/g;
+
+  return text.replace(emojiRegex, (_match, _emojiId, fallback) => {
+    return fallback;
+  });
 }
 
-/**
- * Parse Telegram emojis and strip remaining HTML
- */
-export function sanitizeTelegramHtml(html: string): string {
-  const withEmojis = parseTelegramEmojis(html);
-  return stripHtml(withEmojis);
+export function extractEmojis(text: string): ParsedEmoji[] {
+  if (!text) return [];
+
+  const emojiRegex = /<tg-emoji\s+emoji-id="(\d+)">([^<]+)<\/tg-emoji>/g;
+  const results: ParsedEmoji[] = [];
+  let match;
+
+  while ((match = emojiRegex.exec(text)) !== null) {
+    results.push({
+      emojiId: match[1],
+      fallback: match[2],
+    });
+  }
+
+  return results;
+}
+
+export function renderWithEmojiClasses(
+  text: string,
+  emojiClassMap: Record<string, string> = {}
+): string {
+  if (!text) return "";
+
+  const defaultClasses: Record<string, string> = {
+    "⭐": "emoji-pulse",
+    "🚀": "emoji-bounce",
+    "💎": "emoji-spin",
+    "👥": "emoji-pulse",
+    ...emojiClassMap,
+  };
+
+  const emojiRegex = /<tg-emoji\s+emoji-id="(\d+)">([^<]+)<\/tg-emoji>/g;
+
+  return text.replace(emojiRegex, (_match, _emojiId, fallback) => {
+    const emojiChar = fallback.trim();
+    const className = defaultClasses[emojiChar] || "emoji-pulse";
+    return `<span class="${className}">${fallback}</span>`;
+  });
+}
+
+export function stripXmlTags(text: string): string {
+  if (!text) return "";
+  return text.replace(/<[^>]+>/g, "");
 }

@@ -1,16 +1,14 @@
-import { LogIn, User, Lock } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { LogIn, ShoppingBag, Loader2, Shield } from "lucide-react";
 import { useNavigate } from "react-router";
-import { useEffect } from "react";
-import { km } from "@/utils/khmer";
 
 function getOAuthUrl() {
-  const authUrl = import.meta.env.VITE_KIMI_AUTH_URL;
+  const kimiAuthUrl = import.meta.env.VITE_KIMI_AUTH_URL;
   const appID = import.meta.env.VITE_APP_ID;
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
 
-  const url = new URL(`${authUrl}/api/oauth/authorize`);
+  const url = new URL(`${kimiAuthUrl}/api/oauth/authorize`);
   url.searchParams.set("client_id", appID);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("response_type", "code");
@@ -21,55 +19,96 @@ function getOAuthUrl() {
 }
 
 export default function Login() {
-  const { user, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#1c2732] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#3390ec] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const handleLogin = () => {
+    setIsLoading(true);
+    window.location.href = getOAuthUrl();
+  };
 
   return (
-    <div className="min-h-screen bg-[#1c2732] flex flex-col items-center justify-center px-6 animate-fade-in">
-      {/* Logo area */}
-      <div className="flex flex-col items-center gap-4 mb-10">
-        <div className="w-20 h-20 rounded-2xl bg-[#3390ec] flex items-center justify-center shadow-lg shadow-[#3390ec]/20">
-          <Lock className="w-10 h-10 text-white" />
+    <div
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: "#1c2732" }}
+    >
+      <div
+        className="w-full max-w-sm space-y-6 animate-slide-up"
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center space-y-3">
+          <div
+            className="flex items-center justify-center w-16 h-16"
+            style={{
+              backgroundColor: "#3390ec",
+              borderRadius: "16px",
+            }}
+          >
+            <ShoppingBag className="w-8 h-8 text-white" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold" style={{ color: "#ffffff" }}>
+              Telegram Store
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "#6b7f94" }}>
+              ចូលប្រើប្រាស់ដើម្បីបន្ត
+            </p>
+          </div>
         </div>
-        <div className="text-center">
-          <h1 className="text-white text-2xl font-bold">{km.login}</h1>
-          <p className="text-[#8a9bb0] text-sm mt-1">
-            ចូលប្រើប្រាស់ដើម្បីបន្ត
-          </p>
+
+        {/* Login Card */}
+        <div
+          style={{
+            backgroundColor: "#2b3a4a",
+            borderRadius: "16px",
+            padding: "24px",
+          }}
+        >
+          <div className="space-y-4">
+            <button
+              onClick={handleLogin}
+              disabled={isLoading}
+              className="telegram-btn-primary w-full py-3 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LogIn className="w-4 h-4" />
+              )}
+              {isLoading ? "កំពុងបញ្ជូន..." : "ចូលប្រើប្រាស់ជាមួយ Kimi"}
+            </button>
+
+            <div
+              className="text-center text-xs"
+              style={{ color: "#6b7f94" }}
+            >
+              ឬ
+            </div>
+
+            <button
+              onClick={() => navigate("/")}
+              className="telegram-btn w-full py-3 text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              មើលផលិតផលដោយមិនចូល
+            </button>
+          </div>
+
+          <div
+            className="mt-4 pt-4 text-center"
+            style={{ borderTop: "1px solid #364758" }}
+          >
+            <p className="text-xs" style={{ color: "#4a5e73" }}>
+              ការចូលប្រើប្រាស់មានសុវត្ថិភាព និងត្រូវបានការពារ
+            </p>
+          </div>
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs" style={{ color: "#4a5e73" }}>
+          Telegram Store Bot · 2025
+        </p>
       </div>
-
-      {/* Login button */}
-      <a
-        href={getOAuthUrl()}
-        className="w-full max-w-sm flex items-center justify-center gap-3 bg-[#3390ec] hover:bg-[#2a7fd6] text-white font-medium py-3.5 px-6 rounded-xl transition-all duration-150 active:scale-[0.97]"
-      >
-        <User className="w-5 h-5" />
-        <span>{km.login} ជាមួយ Kimi</span>
-        <LogIn className="w-5 h-5" />
-      </a>
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate("/")}
-        className="mt-4 text-[#8a9bb0] hover:text-white text-sm transition-colors"
-      >
-        ត្រឡប់ទៅទំព័រដើម
-      </button>
     </div>
   );
 }

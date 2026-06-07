@@ -4,141 +4,177 @@
 
 @layer base {
   :root {
-    --background: 207 28% 15%;
+    --background: 207 23% 15%;
     --foreground: 0 0% 100%;
-    --card: 207 28% 15%;
+    --card: 207 23% 15%;
     --card-foreground: 0 0% 100%;
-    --popover: 207 28% 12%;
+    --popover: 207 23% 15%;
     --popover-foreground: 0 0% 100%;
-    --primary: 214 82% 56%;
+    --primary: 207 82% 57%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 24% 24%;
+    --secondary: 207 20% 24%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 24% 24%;
-    --muted-foreground: 213 18% 62%;
-    --accent: 210 24% 24%;
+    --muted: 207 20% 24%;
+    --muted-foreground: 207 10% 60%;
+    --accent: 207 82% 57%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 6 78% 57%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 210 24% 20%;
-    --input: 210 24% 24%;
-    --ring: 214 82% 56%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 207 20% 24%;
+    --input: 207 20% 24%;
+    --ring: 207 82% 57%;
     --radius: 0.75rem;
-    --sidebar-background: 207 28% 12%;
+    --sidebar-background: 207 23% 15%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 214 82% 56%;
+    --sidebar-primary: 207 82% 57%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 24% 24%;
+    --sidebar-accent: 207 20% 24%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 24% 20%;
-    --sidebar-ring: 214 82% 56%;
+    --sidebar-border: 207 20% 24%;
+    --sidebar-ring: 207 82% 57%;
   }
-}
 
-@layer base {
+  body {
+    font-family: "Kantumruy Pro", system-ui, -apple-system, sans-serif;
+    background-color: #1c2732;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   * {
     @apply border-border;
   }
-  body {
-    font-family: 'Kantumruy Pro', system-ui, -apple-system, sans-serif;
-    @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+}
+
+@layer components {
+  .telegram-bg {
+    background-color: #1c2732;
+  }
+
+  .telegram-card {
+    background-color: #2b3a4a;
+    border-radius: 12px;
+  }
+
+  .telegram-btn {
+    background-color: #2b3a4a;
+    color: #ffffff;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .telegram-btn:hover {
+    background-color: #364758;
+  }
+
+  .telegram-btn-primary {
+    background-color: #3390ec;
+    color: #ffffff;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .telegram-btn-primary:hover {
+    background-color: #4a9fef;
+  }
+
+  .emoji-pulse {
+    display: inline-block;
+    animation: emoji-pulse 2s ease-in-out infinite;
+  }
+
+  .emoji-spin {
+    display: inline-block;
+    animation: emoji-spin 3s linear infinite;
+  }
+
+  .emoji-bounce {
+    display: inline-block;
+    animation: emoji-bounce 1.5s ease-in-out infinite;
+  }
+
+  .telegram-input {
+    background-color: #2b3a4a;
+    color: #ffffff;
+    border: 1px solid #364758;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .telegram-input:focus {
+    outline: none;
+    border-color: #3390ec;
+    box-shadow: 0 0 0 2px rgba(51, 144, 236, 0.2);
+  }
+
+  .telegram-input::placeholder {
+    color: #6b7f94;
   }
 }
 
-/* Telegram dark theme specific colors */
-.tg-bg {
-  background-color: #1c2732;
-}
-.tg-bg-dark {
-  background-color: #141e28;
-}
-.tg-button {
-  background-color: #2b3a4a;
-}
-.tg-button-primary {
-  background-color: #3390ec;
-}
-.tg-button-pressed {
-  background-color: #1e2d3d;
-}
-.tg-text {
-  color: #ffffff;
-}
-.tg-text-secondary {
-  color: #8a9bb0;
+@keyframes emoji-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
 }
 
-/* Animations */
-@keyframes tg-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+@keyframes emoji-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-@keyframes tg-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
-@keyframes tg-wobble {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-3deg); }
-  75% { transform: rotate(3deg); }
-}
-
-@keyframes tg-spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes emoji-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-tg-bounce {
-  animation: tg-bounce 2s ease-in-out infinite;
-}
-
-.animate-tg-pulse {
-  animation: tg-pulse 2s ease-in-out infinite;
-}
-
-.animate-tg-wobble {
-  animation: tg-wobble 2s ease-in-out infinite;
-}
-
-.animate-tg-spin-slow {
-  animation: tg-spin-slow 4s linear infinite;
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.3s ease-out forwards;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.2s ease-out;
+  animation: slide-up 0.4s ease-out forwards;
 }
 
-.animate-slide-down {
-  animation: slide-down 0.15s ease-in;
-}
-
-/* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -146,10 +182,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #2b3a4a;
-  border-radius: 2px;
+  background: #364758;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3390ec;
+  background: #4a5e73;
 }

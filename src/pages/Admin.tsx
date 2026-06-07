@@ -1,283 +1,397 @@
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { trpc } from "@/providers/trpc";
 import { useNavigate } from "react-router";
 import {
-  ArrowLeft,
   Shield,
-  Loader2,
+  KeyRound,
+  Globe,
   Save,
-  Database,
-  ShoppingCart,
-  Link2,
-  CheckCircle,
+  Trash2,
+  AlertCircle,
+  ChevronLeft,
+  CheckCircle2,
   XCircle,
-  Package,
+  Activity,
+  Loader2,
 } from "lucide-react";
-import { trpc } from "@/providers/trpc";
-import { useAuth } from "@/hooks/useAuth";
-import { TelegramButton } from "@/components/TelegramButton";
-import { km } from "@/utils/khmer";
 
 export default function Admin() {
+  const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [connectionCode, setConnectionCode] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [encoded, setEncoded] = useState("");
+  const [storeName, setStoreName] = useState("");
+  const [feedback, setFeedback] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
-  const utils = trpc.useUtils();
+  const { data: configs, isLoading: configsLoading, refetch } =
+    trpc.store.list.useQuery(undefined, {
+      enabled: user?.role === "admin",
+    });
 
-  const { data: activeConnection } = trpc.connection.getActive.useQuery();
-  const { data: stats } = trpc.admin.stats.useQuery(undefined, {
-    enabled: user?.role === "admin",
-    retry: false,
-  });
-
-  const saveMutation = trpc.connection.save.useMutation({
-    onSuccess: () => {
-      setSaveSuccess(true);
-      utils.connection.getActive.invalidate();
-      utils.admin.stats.invalidate();
-      setConnectionCode("");
-      setTimeout(() => setSaveSuccess(false), 3000);
+  const decodeMutation = trpc.store.decodeAndSave.useMutation({
+    onSuccess: (data) => {
+      setFeedback({
+        type: "success",
+        message: data.message,
+      });
+      setEncoded("");
+      setStoreName("");
+      refetch();
+      setTimeout(() => setFeedback(null), 4000);
+    },
+    onError: (error) => {
+      setFeedback({
+        type: "error",
+        message: error.message,
+      });
+      setTimeout(() => setFeedback(null), 4000);
     },
   });
 
-  const handleSave = (e: React.FormEvent) => {
+  const deleteMutation = trpc.store.delete.useMutation({
+    onSuccess: () => refetch(),
+  });
+
+  const updateStatusMutation = trpc.store.updateStatus.useMutation({
+    onSuccess: () => refetch(),
+  });
+
+  if (authLoading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#1c2732" }}
+      >
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#3390ec" }} />
+      </div>
+    );
+  }
+
+  if (!user || user.role !== "admin") {
+    return (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center gap-4 p-4"
+        style={{ backgroundColor: "#1c2732" }}
+      >
+        <Shield className="w-12 h-12" style={{ color: "#e74c3c" }} />
+        <h1 className="text-lg font-semibold" style={{ color: "#ffffff" }}>
+          ចូលប្រើប្រាស់តែអ្នកគ្រប់គ្រង់ប៉ុណ្ណោះ
+        </h1>
+        <p className="text-sm text-center" style={{ color: "#6b7f94" }}>
+          ទំព័រនេះតម្រូវឱ្យមានសិទ្ធិអ្នកគ្រប់គ្រង់
+        </p>
+        <button
+          onClick={() => navigate("/")}
+          className="telegram-btn-primary px-4 py-2 text-sm flex items-center gap-2"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          ត្រឡប់ទៅទំព័រដើម
+        </button>
+      </div>
+    );
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!connectionCode.trim()) return;
-    saveMutation.mutate({ code: connectionCode.trim() });
+    if (!encoded.trim()) return;
+
+    decodeMutation.mutate({
+      encoded: encoded.trim(),
+      storeName: storeName.trim() || undefined,
+    });
   };
 
-  const isAdmin = user?.role === "admin";
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-[#1c2732] flex flex-col items-center justify-center gap-4 px-4">
-        <Shield className="w-12 h-12 text-[#8a9bb0]" />
-        <p className="text-[#8a9bb0] text-center">សូមចូលប្រើប្រាស់ដើម្បីចូលទៅកាន់ផ្ទាំងគ្រប់គ្រង</p>
-        <TelegramButton variant="primary" onClick={() => navigate("/login")}>
-          {km.login}
-        </TelegramButton>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-[#1c2732] flex flex-col items-center justify-center gap-4 px-4">
-        <Shield className="w-12 h-12 text-[#e74c3c]" />
-        <p className="text-[#e74c3c] text-center font-medium">
-          អ្នកមិនមានសិទ្ធិចូលប្រើប្រាស់ផ្ទាំងគ្រប់គ្រងនេះទេ
-        </p>
-        <TelegramButton variant="default" onClick={() => navigate("/")}>
-          {km.home}
-        </TelegramButton>
-      </div>
-    );
-  }
+  const handleDelete = (id: number) => {
+    if (window.confirm("តើអ្នកប្រាកដជាចង់លុបការកំណត់នេះមែនទេ?")) {
+      deleteMutation.mutate({ id });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#1c2732] animate-fade-in">
+    <div className="min-h-screen" style={{ backgroundColor: "#1c2732" }}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#1c2732]/95 backdrop-blur-sm border-b border-[#2b3a4a]">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#2b3a4a] transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-white" />
-          </button>
-          <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#3390ec]" />
-            <h1 className="text-white font-semibold text-lg">{km.adminPanel}</h1>
+      <header
+        className="sticky top-0 z-40"
+        style={{
+          backgroundColor: "rgba(28, 39, 50, 0.95)",
+          backdropFilter: "blur(10px)",
+          borderBottom: "1px solid #2b3a4a",
+        }}
+      >
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate("/")}
+                className="flex items-center justify-center w-9 h-9 transition-colors hover:bg-white/10"
+                style={{ borderRadius: "10px" }}
+              >
+                <ChevronLeft className="w-5 h-5" style={{ color: "#6b7f94" }} />
+              </button>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex items-center justify-center w-10 h-10"
+                  style={{
+                    backgroundColor: "#e74c3c",
+                    borderRadius: "12px",
+                  }}
+                >
+                  <Shield className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-base font-bold" style={{ color: "#ffffff" }}>
+                    ផ្ទាំងគ្រប់គ្រង់
+                  </h1>
+                  <p className="text-xs" style={{ color: "#6b7f94" }}>
+                    Admin Panel
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div
+              className="flex items-center gap-1.5 px-3 py-1"
+              style={{
+                backgroundColor: "rgba(231, 76, 60, 0.2)",
+                borderRadius: "8px",
+              }}
+            >
+              <Activity className="w-3 h-3" style={{ color: "#e74c3c" }} />
+              <span className="text-xs" style={{ color: "#e74c3c" }}>
+                Admin
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Content */}
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Stats Grid */}
-        {stats && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#2b3a4a] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Link2 className="w-4 h-4 text-[#3390ec]" />
-                <p className="text-[#8a9bb0] text-xs">{km.activeConnections}</p>
-              </div>
-              <p className="text-white text-2xl font-bold">{stats.activeConnections}</p>
-            </div>
-            <div className="bg-[#2b3a4a] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Database className="w-4 h-4 text-[#8a9bb0]" />
-                <p className="text-[#8a9bb0] text-xs">{km.totalConnections}</p>
-              </div>
-              <p className="text-white text-2xl font-bold">{stats.totalConnections}</p>
-            </div>
-            <div className="bg-[#2b3a4a] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <ShoppingCart className="w-4 h-4 text-[#2ecc71]" />
-                <p className="text-[#8a9bb0] text-xs">{km.successfulOrders}</p>
-              </div>
-              <p className="text-[#2ecc71] text-2xl font-bold">{stats.successfulOrders}</p>
-            </div>
-            <div className="bg-[#2b3a4a] rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <XCircle className="w-4 h-4 text-[#e74c3c]" />
-                <p className="text-[#8a9bb0] text-xs">{km.failedOrders}</p>
-              </div>
-              <p className="text-[#e74c3c] text-2xl font-bold">{stats.failedOrders}</p>
-            </div>
-            <div className="bg-[#2b3a4a] rounded-xl p-4 col-span-2">
-              <div className="flex items-center gap-2 mb-2">
-                <Package className="w-4 h-4 text-[#3390ec]" />
-                <p className="text-[#8a9bb0] text-xs">{km.cachedProducts}</p>
-              </div>
-              <p className="text-white text-2xl font-bold">{stats.cachedProducts}</p>
-            </div>
+      <main className="max-w-3xl mx-auto px-4 py-4 space-y-4">
+        {/* Feedback */}
+        {feedback && (
+          <div
+            className="flex items-center gap-2 p-3 animate-fade-in"
+            style={{
+              backgroundColor:
+                feedback.type === "success"
+                  ? "rgba(46, 204, 113, 0.1)"
+                  : "rgba(231, 76, 60, 0.1)",
+              borderRadius: "12px",
+              border: `1px solid ${
+                feedback.type === "success"
+                  ? "rgba(46, 204, 113, 0.2)"
+                  : "rgba(231, 76, 60, 0.2)"
+              }`,
+            }}
+          >
+            {feedback.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4" style={{ color: "#2ecc71" }} />
+            ) : (
+              <XCircle className="w-4 h-4" style={{ color: "#e74c3c" }} />
+            )}
+            <span
+              className="text-xs"
+              style={{
+                color:
+                  feedback.type === "success" ? "#2ecc71" : "#e74c3c",
+              }}
+            >
+              {feedback.message}
+            </span>
           </div>
         )}
 
-        {/* Connection Code Form */}
-        <div className="bg-[#2b3a4a] rounded-xl p-5 space-y-4">
-          <h3 className="text-white font-medium flex items-center gap-2">
-            <Link2 className="w-5 h-5 text-[#3390ec]" />
-            ការកំណត់ការតភ្ជាប់ API
-          </h3>
+        {/* Add Config Form */}
+        <div
+          className="animate-fade-in"
+          style={{
+            backgroundColor: "#2b3a4a",
+            borderRadius: "12px",
+            padding: "16px",
+          }}
+        >
+          <h2
+            className="text-sm font-semibold mb-4 flex items-center gap-2"
+            style={{ color: "#ffffff" }}
+          >
+            <KeyRound className="w-4 h-4" style={{ color: "#3390ec" }} />
+            បញ្ចូលការកំណត់ហាង
+          </h2>
 
-          {/* Current Connection Status */}
-          <div className="p-3 rounded-lg bg-[#1c2732]">
-            <p className="text-[#8a9bb0] text-xs mb-1">ការតភ្ជាប់បច្ចុប្បន្ន</p>
-            {activeConnection ? (
-              <div className="space-y-1">
-                <p className="text-white text-sm font-mono">
-                  URL: {activeConnection.apiUrlPreview}
-                </p>
-                <p className="text-[#8a9bb0] text-sm font-mono">
-                  Key: {activeConnection.apiKeyPreview}...
-                </p>
-                <div className="flex items-center gap-1 mt-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-[#2ecc71]" />
-                  <span className="text-[#2ecc71] text-xs">សកម្ម</span>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <XCircle className="w-4 h-4 text-[#e74c3c]" />
-                <span className="text-[#e74c3c] text-sm">{km.noConnection}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSave} className="space-y-3">
-            <div>
-              <label className="text-[#8a9bb0] text-sm block mb-1.5">
-                {km.enterConnectionCode}
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium" style={{ color: "#6b7f94" }}>
+                Base64 Encoded String
               </label>
-              <input
-                type="text"
-                value={connectionCode}
-                onChange={(e) => setConnectionCode(e.target.value)}
-                className="w-full px-3 py-2.5 bg-[#1c2732] border border-[#1c2732] rounded-lg text-white placeholder:text-[#5a6a7a] focus:border-[#3390ec] focus:outline-none text-sm font-mono"
-                placeholder={km.connectionCodePlaceholder}
+              <textarea
+                value={encoded}
+                onChange={(e) => setEncoded(e.target.value)}
+                placeholder="conn_eyJrIjoic2tf..."
                 required
+                rows={3}
+                className="telegram-input w-full text-sm font-mono resize-none"
               />
             </div>
 
-            {saveSuccess && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#2ecc71]/10 border border-[#2ecc71]/20">
-                <CheckCircle className="w-4 h-4 text-[#2ecc71]" />
-                <p className="text-sm text-[#2ecc71]">{km.connectionSaved}</p>
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium" style={{ color: "#6b7f94" }}>
+                ឈ្មោះហាង (ស្រេចចិត្ត)
+              </label>
+              <input
+                type="text"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                placeholder="My Store"
+                className="telegram-input w-full text-sm"
+              />
+            </div>
 
-            {saveMutation.isError && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-[#e74c3c]/10 border border-[#e74c3c]/20">
-                <XCircle className="w-4 h-4 text-[#e74c3c]" />
-                <p className="text-sm text-[#e74c3c]">{km.connectionSaveError}</p>
-              </div>
-            )}
-
-            <TelegramButton
-              variant="primary"
-              type="submit"
-              icon={
-                saveMutation.isPending ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Save className="w-5 h-5" />
-                )
-              }
-              disabled={saveMutation.isPending}
-              className="w-full"
+            <div
+              className="flex items-start gap-2 p-3"
+              style={{
+                backgroundColor: "rgba(243, 156, 18, 0.1)",
+                borderRadius: "10px",
+              }}
             >
-              {saveMutation.isPending ? km.loading : km.save}
-            </TelegramButton>
+              <AlertCircle
+                className="w-4 h-4 mt-0.5 shrink-0"
+                style={{ color: "#f39c12" }}
+              />
+              <p className="text-xs" style={{ color: "#f39c12" }}>
+                បញ្ចូល base64 string ដែលបានផ្តល់ដោយក្រុមហ៊ុន
+                Format: conn_eyJrIjoic2tf... (decoded: {"{"}k: API_KEY, u: API_URL{"}"})
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={decodeMutation.isPending || !encoded.trim()}
+              className="telegram-btn-primary w-full py-2.5 text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {decodeMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {decodeMutation.isPending ? "កំពុងរក្សា..." : "រក្សាទុក"}
+            </button>
           </form>
         </div>
 
-        {/* Orders Table */}
-        <div className="bg-[#2b3a4a] rounded-xl p-5">
-          <h3 className="text-white font-medium mb-3">{km.orderHistory}</h3>
-          <OrdersList />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OrdersList() {
-  const { data: orders, isLoading } = trpc.external.orders.useQuery();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center py-4">
-        <Loader2 className="w-5 h-5 text-[#3390ec] animate-spin" />
-      </div>
-    );
-  }
-
-  if (!orders || orders.length === 0) {
-    return (
-      <p className="text-[#8a9bb0] text-sm text-center py-4">
-        មិនទាន់មានការទិញ
-      </p>
-    );
-  }
-
-  return (
-    <div className="space-y-2 max-h-64 overflow-y-auto">
-      {orders.map((order) => (
+        {/* Config List */}
         <div
-          key={order.id}
-          className="flex items-center justify-between p-3 rounded-lg bg-[#1c2732]"
+          className="animate-fade-in"
+          style={{
+            backgroundColor: "#2b3a4a",
+            borderRadius: "12px",
+            padding: "16px",
+          }}
         >
-          <div>
-            <p className="text-white text-sm">{order.productId}</p>
-            <p className="text-[#8a9bb0] text-xs">
-              {order.createdAt
-                ? new Date(order.createdAt).toLocaleDateString("km-KH")
-                : ""}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-xs px-2 py-1 rounded-full ${
-                order.status === "success"
-                  ? "bg-[#2ecc71]/20 text-[#2ecc71]"
-                  : order.status === "failed"
-                  ? "bg-[#e74c3c]/20 text-[#e74c3c]"
-                  : "bg-[#f39c12]/20 text-[#f39c12]"
-              }`}
-            >
-              {order.status === "success"
-                ? "ជោគជ័យ"
-                : order.status === "failed"
-                ? "បរាជ័យ"
-                : "កំពុងរង់ចាំ"}
-            </span>
-          </div>
+          <h2
+            className="text-sm font-semibold mb-4 flex items-center gap-2"
+            style={{ color: "#ffffff" }}
+          >
+            <Globe className="w-4 h-4" style={{ color: "#3390ec" }} />
+            ការកំណត់ទាំងអស់
+          </h2>
+
+          {configsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#3390ec" }} />
+            </div>
+          ) : configs && configs.length > 0 ? (
+            <div className="space-y-2">
+              {configs.map((config) => (
+                <div
+                  key={config.id}
+                  className="p-3 animate-fade-in"
+                  style={{
+                    backgroundColor: "#1c2732",
+                    borderRadius: "10px",
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium" style={{ color: "#ffffff" }}>
+                        {config.storeName}
+                      </span>
+                      <span
+                        className="text-xs px-2 py-0.5"
+                        style={{
+                          backgroundColor:
+                            config.isActive === "yes"
+                              ? "rgba(46, 204, 113, 0.2)"
+                              : "rgba(231, 76, 60, 0.2)",
+                          borderRadius: "6px",
+                          color:
+                            config.isActive === "yes" ? "#2ecc71" : "#e74c3c",
+                        }}
+                      >
+                        {config.isActive === "yes" ? "សកម្ម" : "ផ្អាក"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() =>
+                          updateStatusMutation.mutate({
+                            id: config.id,
+                            isActive: config.isActive === "yes" ? "no" : "yes",
+                          })
+                        }
+                        className="p-1.5 transition-colors hover:bg-white/10"
+                        style={{ borderRadius: "6px" }}
+                        title="ប្តូរស្ថានភាព"
+                      >
+                        <Activity className="w-3.5 h-3.5" style={{ color: "#6b7f94" }} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(config.id)}
+                        className="p-1.5 transition-colors hover:bg-white/10"
+                        style={{ borderRadius: "6px" }}
+                        title="លុប"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" style={{ color: "#e74c3c" }} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "#6b7f94" }}>
+                        API_URL:
+                      </span>
+                      <span
+                        className="text-xs font-mono truncate"
+                        style={{ color: "#8a9bb0" }}
+                      >
+                        {config.apiUrl}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "#6b7f94" }}>
+                        API_KEY:
+                      </span>
+                      <span
+                        className="text-xs font-mono"
+                        style={{ color: "#8a9bb0" }}
+                      >
+                        {config.apiKey.substring(0, 8)}...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <Globe className="w-8 h-8 mx-auto mb-2" style={{ color: "#4a5e73" }} />
+              <p className="text-xs" style={{ color: "#6b7f94" }}>
+                មិនទាន់មានការកំណត់
+              </p>
+            </div>
+          )}
         </div>
-      ))}
+      </main>
     </div>
   );
 }

@@ -6,8 +6,8 @@ import {
   text,
   timestamp,
   decimal,
+  bigint,
   json,
-  int,
 } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
@@ -28,46 +28,50 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-export const connectionCodes = mysqlTable("connection_codes", {
+export const storeConfig = mysqlTable("store_config", {
   id: serial("id").primaryKey(),
-  apiKey: text("api_key").notNull(),
-  apiUrl: text("api_url").notNull(),
-  isActive: int("is_active").default(1).notNull(),
+  apiKey: varchar("api_key", { length: 512 }).notNull(),
+  apiUrl: varchar("api_url", { length: 512 }).notNull(),
+  storeName: varchar("store_name", { length: 255 }).default("My Store"),
+  isActive: mysqlEnum("is_active", ["yes", "no"]).default("yes").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
-export type ConnectionCode = typeof connectionCodes.$inferSelect;
-export type InsertConnectionCode = typeof connectionCodes.$inferInsert;
+export type StoreConfig = typeof storeConfig.$inferSelect;
+export type InsertStoreConfig = typeof storeConfig.$inferInsert;
 
 export const orders = mysqlTable("orders", {
   id: serial("id").primaryKey(),
+  userId: bigint("user_id", { mode: "number", unsigned: true }).notNull(),
   productId: varchar("product_id", { length: 255 }).notNull(),
-  productName: varchar("product_name", { length: 500 }),
-  quantity: int("quantity").default(1).notNull(),
-  buyerInfo: text("buyer_info"),
-  status: mysqlEnum("status", ["success", "failed", "pending"])
-    .default("pending")
-    .notNull(),
-  codes: text("codes"),
-  errorMessage: text("error_message"),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  quantity: bigint("quantity", { mode: "number", unsigned: true }).default(1).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  status: mysqlEnum("status", ["pending", "completed", "failed", "cancelled"]).default("pending").notNull(),
+  externalOrderId: varchar("external_order_id", { length: 255 }),
+  metadata: json("metadata").$type<Record<string, unknown>>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
 });
 
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
-
-export const productsCache = mysqlTable("products_cache", {
-  id: serial("id").primaryKey(),
-  externalId: varchar("external_id", { length: 255 }).notNull().unique(),
-  name: varchar("name", { length: 500 }),
-  description: text("description"),
-  nameEnHtml: text("name_en_html"),
-  descEn: text("desc_en"),
-  price: decimal("price", { precision: 10, scale: 2 }),
-  imageUrl: text("image_url"),
-  rawData: json("raw_data"),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type ProductCache = typeof productsCache.$inferSelect;
-export type InsertProductCache = typeof productsCache.$inferInsert;
+//
+// Example:
+// export const posts = mysqlTable("posts", {
+//   id: serial("id").primaryKey(),
+//   title: varchar("title", { length: 255 }).notNull(),
+//   content: text("content"),
+//   createdAt: timestamp("created_at").notNull().defaultNow(),
+// });
+//
+// Note: FK columns referencing a serial() PK must use:
+//   bigint("columnName", { mode: "number", unsigned: true }).notNull()
