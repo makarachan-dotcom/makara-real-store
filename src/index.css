@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 207 28% 15%;
+    --foreground: 0 0% 100%;
+    --card: 207 28% 15%;
+    --card-foreground: 0 0% 100%;
+    --popover: 207 28% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 214 82% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 24% 24%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 24% 24%;
+    --muted-foreground: 213 18% 62%;
+    --accent: 210 24% 24%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 6 78% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 210 24% 20%;
+    --input: 210 24% 24%;
+    --ring: 214 82% 56%;
+    --radius: 0.75rem;
+    --sidebar-background: 207 28% 12%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 214 82% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 24% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 210 24% 20%;
+    --sidebar-ring: 214 82% 56%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    font-family: 'Kantumruy Pro', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+}
+
+/* Telegram dark theme specific colors */
+.tg-bg {
+  background-color: #1c2732;
+}
+.tg-bg-dark {
+  background-color: #141e28;
+}
+.tg-button {
+  background-color: #2b3a4a;
+}
+.tg-button-primary {
+  background-color: #3390ec;
+}
+.tg-button-pressed {
+  background-color: #1e2d3d;
+}
+.tg-text {
+  color: #ffffff;
+}
+.tg-text-secondary {
+  color: #8a9bb0;
+}
+
+/* Animations */
+@keyframes tg-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes tg-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes tg-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+@keyframes tg-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-tg-bounce {
+  animation: tg-bounce 2s ease-in-out infinite;
+}
+
+.animate-tg-pulse {
+  animation: tg-pulse 2s ease-in-out infinite;
+}
+
+.animate-tg-wobble {
+  animation: tg-wobble 2s ease-in-out infinite;
+}
+
+.animate-tg-spin-slow {
+  animation: tg-spin-slow 4s linear infinite;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.15s ease-in;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1c2732;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2b3a4a;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3390ec;
+}
